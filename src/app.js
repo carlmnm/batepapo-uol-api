@@ -90,12 +90,12 @@ app.post('/messages', async (req, res) => {
 app.get('/messages', async (req, res) => {
     const limit = req.query.limit
     const userName = req.headers.user
-    const messagesLimit = parseInt(limit)
+    const lengthLimit = parseInt(limit)
 
     try {
         const messagesList = await db.collection("messages").find({$or: [{to: "Todos"}, {to: userName}, {from: userName}]}).toArray()
         if (limit ) {
-            if (limit < 1 || messagesLimit === NaN) return res.sendStatus(422)
+            if (lengthLimit < 1 || lengthLimit === NaN) return res.sendStatus(422)
             return res.send([...messagesList].slice(-limit).reverse())
         }
         return res.send([...messagesList].reverse())
@@ -107,12 +107,17 @@ app.get('/messages', async (req, res) => {
 app.post('.status', async (req, res) => {
     const userName = req.headers.user
 
-    const userExists = await db.collection("participants").findOne({ name: userName.name })
-    if (!userExists) return res.sendStatus(404)
+    try {
+        const userExists = await db.collection("participants").findOne({ name: userName.name })
+        if (!userExists) return res.sendStatus(404)
+    
+        await db.collection("participants").updateOne({name: userName}, {$set: {lastStatus: Date.now()}})
+    
+        return res.sendStatus(200)
 
-    await db.collection("participants").updateOne({name: userName}, {$set: {lastStatus: Date.now()}})
+    } catch {
 
-    return res.sendStatus(200)
+    }
 })
 
 
