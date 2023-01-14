@@ -1,4 +1,4 @@
-import express from "express"
+import express, { response } from "express"
 import cors from "cors"
 import { MongoClient } from "mongodb"
 import dotenv from "dotenv"
@@ -22,7 +22,12 @@ try {
 }
 
 app.post('/participants', async (req, res) => {
-    const userName = await participantSchema.validateAsync(req.body)
+    const userName = req.body
+    
+    const validation = participantSchema.validate(userName)
+    if (validation.error) {
+        return res.sendStatus(422)
+    }
 
     const userExist = await db.collection("participants").findOne({name: userName.name})
     if (userExist) return res.sendStatus(409)
@@ -40,8 +45,13 @@ app.post('/participants', async (req, res) => {
             type: "status",
             time: dayjs().format('HH:mm:ss')
         })
+
         return res.sendStatus(201)
+    
     } catch (err) {
+        
+        console.log(err)
+        if (err.isJoi) return res.sendStatus(422)
         return res.sendStatus(500).send(err.message)
     }
 })
