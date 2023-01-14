@@ -91,7 +91,7 @@ app.get('/messages', async (req, res) => {
     const limit = req.query.limit
     const userName = req.headers.user
     const lengthLimit = parseInt(limit)
-    console.log(isNaN("4"))
+
     try {
         const messagesList = await db.collection("messages").find({$or: [{to: "Todos"}, {to: userName}, {from: userName}]}).toArray()
         if (limit ) {
@@ -104,8 +104,9 @@ app.get('/messages', async (req, res) => {
     }
 })
 
-app.post('.status', async (req, res) => {
+app.post('/status', async (req, res) => {
     const userName = req.headers.user
+    console.log(userName)
 
     try {
         const userExists = await db.collection("participants").findOne({ name: userName })
