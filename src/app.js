@@ -3,6 +3,7 @@ import cors from "cors"
 import { MongoClient } from "mongodb"
 import dotenv from "dotenv"
 import dayjs from "dayjs"
+import { participantSchema } from "../schemas/schema.js"
 dotenv.config()
 
 const app = express()
@@ -23,11 +24,20 @@ try {
 app.post('/participants', async (req, res) => {
     const userName = req.body.name
 
+    const validation = participantSchema.validate(userName, {abortEarly: true})
+    if (validation.error){
+        return res.status(422).send(validation.error.details)
+    }
+
+    const userExist = await db.collection("participants").findOne({name: userName})
+    if (userExist) return res.sendStatus(409)
+
     try {
         await db.collection("participants").insertOne({
             name: userName,
             lastStatus: Date.now()
         })
+
         await db.collection("messages").insertOne({
             from: userName,
             to: "Todos",
