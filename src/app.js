@@ -90,11 +90,12 @@ app.post('/messages', async (req, res) => {
 app.get('/messages', async (req, res) => {
     const limit = req.query.limit
     const userName = req.headers.user
+    const messagesLimit = parseInt(limit)
 
-    const messagesList = await db.collection("messages").find({$or: [{to: "Todos"}, {to: userName}, {from: userName}]}).toArray()
     try {
-        if (limit) {
-            parseInt(limit)
+        const messagesList = await db.collection("messages").find({$or: [{to: "Todos"}, {to: userName}, {from: userName}]}).toArray()
+        if (limit ) {
+            if (limit < 1 || messagesLimit === NaN) return res.sendStatus(422)
             return res.send([...messagesList].slice(-limit).reverse())
         }
         return res.send([...messagesList].reverse())
@@ -111,9 +112,7 @@ app.post('.status', async (req, res) => {
 
     await db.collection("participants").updateOne({name: userName}, {$set: {lastStatus: Date.now()}})
 
-
-
-
+    return res.sendStatus(200)
 })
 
 
