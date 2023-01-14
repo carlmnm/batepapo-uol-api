@@ -95,12 +95,25 @@ app.get('/messages', async (req, res) => {
     try {
         if (limit) {
             parseInt(limit)
-            return res.send(messagesList.slice(-limit))
+            return res.send([...messagesList].slice(-limit).reverse())
         }
-        return res.send(messagesList)
+        return res.send([...messagesList].reverse())
     } catch(err) {
         return res.sendStatus(500).send(err.message)
     }
+})
+
+app.post('.status', async (req, res) => {
+    const userName = req.headers.user
+
+    const userExists = await db.collection("participants").findOne({ name: userName.name })
+    if (!userExists) return res.sendStatus(404)
+
+    await db.collection("participants").updateOne({name: userName}, {$set: {lastStatus: Date.now()}})
+
+
+
+
 })
 
 
