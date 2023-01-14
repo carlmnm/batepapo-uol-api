@@ -3,7 +3,7 @@ import cors from "cors"
 import { MongoClient } from "mongodb"
 import dotenv from "dotenv"
 import dayjs from "dayjs"
-import { participantSchema } from "../schemas/schema.js"
+import { participantSchema, messageSchema } from "../schemas/schema.js"
 dotenv.config()
 
 const app = express()
@@ -23,14 +23,14 @@ try {
 
 app.post('/participants', async (req, res) => {
     const userName = req.body
-    
+
     const validation = participantSchema.validate(userName)
     if (validation.error) {
         return res.sendStatus(422)
     }
 
-    const userExist = await db.collection("participants").findOne({name: userName.name})
-    if (userExist) return res.sendStatus(409)
+    const userExists = await db.collection("participants").findOne({ name: userName.name })
+    if (userExists) return res.sendStatus(409)
 
     try {
         await db.collection("participants").insertOne({
@@ -47,17 +47,14 @@ app.post('/participants', async (req, res) => {
         })
 
         return res.sendStatus(201)
-    
+
     } catch (err) {
-        
-        console.log(err)
-        if (err.isJoi) return res.sendStatus(422)
         return res.sendStatus(500).send(err.message)
     }
 })
 
 app.get('/participants', async (req, res) => {
-    const users =  await db.collection("participants").find().toArray()
+    const users = await db.collection("participants").find().toArray()
     try {
         return res.send(users)
     } catch {
@@ -65,11 +62,36 @@ app.get('/participants', async (req, res) => {
     }
 })
 
+app.post('/messages', async (req, res) => {
+    const userMessage = req.body
+
+    const validation = messageSchema.validate(userMessage)
+    if (validation.error) {
+        return res.sendStatus(422)
+    }
+
+    const userName = req.headers.user
+
+    const userExists = await db.collection("participants").findOne({ name: userName })
+    if (!userExists) return res.sendStatus(422)
+
+    try {
+        await db.collection("messages").insertOne({
+            from: userName, 
+            ...userMessage, 
+            time: dayjs().format('HH:mm:ss')
+        })
+        return res.sendStatus(201)
+    } catch (err) {
+        return res.sendStatus(500).send(err.message)
+    }
+})
+
 app.get('/messages', async (req, res) => {
-    const messagesList =  await db.collection("messages").find().toArray()
+    const messagesList = await db.collection("messages").find().toArray()
     try {
         return res.send(messagesList)
-    } catch {
+    } catch(err) {
         return res.sendStatus(500).send(err.message)
     }
 })
