@@ -91,11 +91,11 @@ app.get('/messages', async (req, res) => {
     const limit = req.query.limit
     const userName = req.headers.user
     const lengthLimit = parseInt(limit)
-
+    console.log(isNaN("4"))
     try {
         const messagesList = await db.collection("messages").find({$or: [{to: "Todos"}, {to: userName}, {from: userName}]}).toArray()
         if (limit ) {
-            if (lengthLimit < 1 || lengthLimit === NaN) return res.sendStatus(422)
+            if (lengthLimit < 1 || isNaN(limit)) return res.sendStatus(422)
             return res.send([...messagesList].slice(-limit).reverse())
         }
         return res.send([...messagesList].reverse())
