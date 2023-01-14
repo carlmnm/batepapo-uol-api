@@ -24,7 +24,7 @@ try {
 app.post('/participants', async (req, res) => {
     const userName = req.body.name
 
-    const validation = participantSchema.validate(userName, {abortEarly: true})
+    const validation = await participantSchema.validateAsync(userName, {abortEarly: true})
     if (validation.error){
         return res.status(422).send(validation.error.details)
     }
