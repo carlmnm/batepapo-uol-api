@@ -1,6 +1,6 @@
 import express, { response } from "express"
 import cors from "cors"
-import { MongoClient } from "mongodb"
+import { MongoClient, ObjectId } from "mongodb"
 import dotenv from "dotenv"
 import dayjs from "dayjs"
 import { participantSchema, messageSchema } from "../schemas/schema.js"
@@ -106,7 +106,6 @@ app.get('/messages', async (req, res) => {
 
 app.post('/status', async (req, res) => {
     const userName = req.headers.user
-    console.log(userName)
 
     try {
         const userExists = await db.collection("participants").findOne({ name: userName })
@@ -121,6 +120,33 @@ app.post('/status', async (req, res) => {
     }
 })
 
+
+async function autoDisconnect () {
+    const users = await db.collection("participants").find().toArray()
+    const howMuchTime = Date.now() - 1000
+
+    try {
+        users.forEach(async item => {
+            const howMuchTime = Date.now() - item.lastStatus
+            if (howMuchTime > 10000 ) {
+                await db.collection("participants").deleteOne({_id: ObjectId(item._id)})
+
+                await db.collection("messages").insertOne({
+                    from: item.name,
+                    to: "Todos",
+                    text: "sai da sala...",
+                    type: "status",
+                    time: dayjs().format('HH:mm:ss')
+                })
+            }
+        });
+    } catch {
+
+    }
+
+}
+
+setInterval(autoDisconnect, 15000)
 
 
 app.listen(PORT, () => console.log(`Este servidor roda na porta: ${PORT}`))
